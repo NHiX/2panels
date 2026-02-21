@@ -2,7 +2,7 @@
 
 2panels is a modern, terminal-based, dual-pane file manager built in Go using the `tview` and `tcell` libraries.
 
-![Overview](https://github.com/NHiX/antigravity/blob/master/screenshot.png?raw=true) *(Screenshot coming soon)*
+![Overview](https://github.com/NHiX/2panels/blob/master/screenshot.png?raw=true) *(Screenshot coming soon)*
 
 ## Features
 
@@ -28,8 +28,8 @@ Make sure you have [Go](https://golang.org/dl/) installed (version 1.20 or later
 Clone the repository and build the executable:
 
 ```sh
-git clone https://github.com/NHiX/antigravity.git
-cd antigravity/2panels
+git clone https://github.com/NHiX/2panels.git
+cd 2panels
 go build
 ```
 
