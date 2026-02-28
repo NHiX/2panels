@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"2panels/fs"
 	"fmt"
 	"time"
 
@@ -18,9 +19,28 @@ func NewStatusBar(a *App) *tview.TextView {
 	bar.SetBackgroundColor(tcell.ColorDarkBlue)
 	bar.SetTextColor(tcell.ColorWhite)
 
+	formatSize := func(b uint64) string {
+		const unit = 1024
+		if b < unit {
+			return fmt.Sprintf("%d B", b)
+		}
+		div, exp := uint64(unit), 0
+		for n := b / unit; n >= unit; n /= unit {
+			div *= unit
+			exp++
+		}
+		return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "KMGTPE"[exp])
+	}
+
 	updateText := func() {
 		currentTime := time.Now().Format("15:04:05")
-		text := fmt.Sprintf(`%s | ["copy"] [yellow]F5[white] Copy [""]  ["move"] [yellow]F6[white] Move [""]  ["quit"] [yellow]F10[white] Quit [""]`, currentTime)
+		diskInfo := ""
+		usage, err := fs.GetDiskUsage(a.LeftPane.Path)
+		if err == nil {
+			diskInfo = fmt.Sprintf(" | Disk: %s/%s free", formatSize(usage.Free), formatSize(usage.Total))
+		}
+
+		text := fmt.Sprintf(`%s%s | ["copy"] [yellow]F5[white] Copy [""]  ["move"] [yellow]F6[white] Move [""]  ["quit"] [yellow]F10[white] Quit [""]`, currentTime, diskInfo)
 		bar.SetText(text)
 	}
 

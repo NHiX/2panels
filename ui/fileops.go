@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"2panels/fs"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -77,9 +80,56 @@ func (a *App) showError(message string) {
 }
 
 func (a *App) ActionCompress(p *Pane) {
-	a.showError("Compression not yet implemented")
+	srcPath := p.GetSelectedPath()
+	if srcPath == "" {
+		return
+	}
+
+	defaultName := filepath.Base(srcPath) + ".zip"
+	a.promptInput(fmt.Sprintf("Archive Name (%s):", defaultName), func(name string) {
+		if name == "" {
+			name = defaultName
+		}
+		if !strings.HasSuffix(name, ".zip") {
+			name += ".zip"
+		}
+
+		dstPath := filepath.Join(p.Path, name)
+		go func() {
+			err := fs.Zip(srcPath, dstPath)
+			a.TviewApp.QueueUpdateDraw(func() {
+				if err != nil {
+					a.showError(fmt.Sprintf("Compression failed: %v", err))
+				} else {
+					p.Refresh()
+				}
+			})
+		}()
+	})
 }
 
 func (a *App) ActionExtract(p *Pane) {
-	a.showError("Extraction not yet implemented")
+	srcPath := p.GetSelectedPath()
+	if srcPath == "" || !strings.HasSuffix(strings.ToLower(srcPath), ".zip") {
+		a.showError("Please select a .zip file to extract.")
+		return
+	}
+
+	dstDir := p.Path
+	a.promptInput(fmt.Sprintf("Extract to (%s):", dstDir), func(target string) {
+		if target == "" {
+			target = dstDir
+		}
+
+		go func() {
+			err := fs.Unzip(srcPath, target)
+			a.TviewApp.QueueUpdateDraw(func() {
+				if err != nil {
+					a.showError(fmt.Sprintf("Extraction failed: %v", err))
+				} else {
+					p.Refresh()
+				}
+			})
+		}()
+	})
 }

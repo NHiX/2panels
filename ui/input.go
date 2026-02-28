@@ -12,11 +12,25 @@ func (a *App) setupInputCapture() {
 		case tcell.KeyTab:
 			a.SwitchFocus()
 			return nil
+		case tcell.KeyCtrlB:
+			focus := a.TviewApp.GetFocus()
+			if focus == a.LeftPane.Table {
+				a.ActionBookmarks(a.LeftPane)
+			} else {
+				a.ActionBookmarks(a.RightPane)
+			}
+			return nil
 		case tcell.KeyF5:
 			a.Action(false) // Copy
 			return nil
 		case tcell.KeyF6:
 			a.Action(true) // Move
+			return nil
+		case tcell.KeyF8:
+			a.ActionDelete()
+			return nil
+		case tcell.KeyF2:
+			a.ActionRename()
 			return nil
 		case tcell.KeyF10:
 			a.TviewApp.Stop()
@@ -26,6 +40,14 @@ func (a *App) setupInputCapture() {
 			return nil
 		case tcell.KeyCtrlR:
 			a.OpenMenu("right")
+			return nil
+		case tcell.KeyCtrlS:
+			focus := a.TviewApp.GetFocus()
+			if focus == a.LeftPane.Table {
+				a.ActionSearch(a.LeftPane)
+			} else {
+				a.ActionSearch(a.RightPane)
+			}
 			return nil
 		case tcell.KeyCtrlF:
 			a.OpenMenu("file")

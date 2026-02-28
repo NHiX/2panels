@@ -101,3 +101,88 @@ func (a *App) Action(move bool) {
 
 	a.Pages.AddPage("modal", modal, true, true)
 }
+
+func (a *App) ActionDelete() {
+	var srcPane *Pane
+	focus := a.TviewApp.GetFocus()
+	if focus == a.LeftPane.Table {
+		srcPane = a.LeftPane
+	} else if focus == a.RightPane.Table {
+		srcPane = a.RightPane
+	} else {
+		if a.FocusLeft {
+			srcPane = a.LeftPane
+		} else {
+			srcPane = a.RightPane
+		}
+	}
+
+	srcPath := srcPane.GetSelectedPath()
+	if srcPath == "" {
+		return
+	}
+
+	row, _ := srcPane.GetSelection()
+	if row <= 1 {
+		return
+	}
+
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Delete %s? This action cannot be undone.", filepath.Base(srcPath))).
+		AddButtons([]string{"Delete", "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Delete" {
+				go func() {
+					err := fs.Delete(srcPath)
+					a.TviewApp.QueueUpdateDraw(func() {
+						if err != nil {
+							a.showError(fmt.Sprintf("Error deleting %s: %v", srcPath, err))
+						} else {
+							srcPane.Refresh()
+						}
+						a.Pages.RemovePage("delete_modal")
+					})
+				}()
+			} else {
+				a.Pages.RemovePage("delete_modal")
+			}
+		})
+
+	a.Pages.AddPage("delete_modal", modal, true, true)
+}
+
+func (a *App) ActionRename() {
+	var srcPane *Pane
+	focus := a.TviewApp.GetFocus()
+	if focus == a.LeftPane.Table {
+		srcPane = a.LeftPane
+	} else if focus == a.RightPane.Table {
+		srcPane = a.RightPane
+	} else {
+		if a.FocusLeft {
+			srcPane = a.LeftPane
+		} else {
+			srcPane = a.RightPane
+		}
+	}
+
+	srcPath := srcPane.GetSelectedPath()
+	if srcPath == "" {
+		return
+	}
+
+	oldName := filepath.Base(srcPath)
+	a.promptInput(fmt.Sprintf("Rename %s to:", oldName), func(newName string) {
+		if newName == "" || newName == oldName {
+			return
+		}
+
+		dstPath := filepath.Join(filepath.Dir(srcPath), newName)
+		err := os.Rename(srcPath, dstPath)
+		if err != nil {
+			a.showError(fmt.Sprintf("Error renaming: %v", err))
+		} else {
+			srcPane.Refresh()
+		}
+	})
+}
