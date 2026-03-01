@@ -32,6 +32,14 @@ func (a *App) setupInputCapture() {
 		case tcell.KeyF2:
 			a.ActionRename()
 			return nil
+		case tcell.KeyF4:
+			focus := a.TviewApp.GetFocus()
+			if focus == a.LeftPane.Table {
+				a.ActionOpenWith(a.LeftPane)
+			} else {
+				a.ActionOpenWith(a.RightPane)
+			}
+			return nil
 		case tcell.KeyF10:
 			a.TviewApp.Stop()
 			return nil

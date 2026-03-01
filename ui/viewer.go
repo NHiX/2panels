@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -25,6 +26,21 @@ func (a *App) OpenFileViewer(filePath string) {
 	// Basic safety check: don't load huge files
 	if len(content) > 1024*1024 {
 		content = append(content[:1024*1024], []byte("\n... [content truncated: file too large]")...)
+	}
+
+	// Check if binary
+	if isBinary(content) {
+		modal := tview.NewModal().
+			SetText(fmt.Sprintf("%s seems to be a binary file. Open with external editor?", filepath.Base(filePath))).
+			AddButtons([]string{"Yes", "No"}).
+			SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+				a.Pages.RemovePage("modal")
+				if buttonLabel == "Yes" {
+					a.ActionOpenWith(a.getActivePane())
+				}
+			})
+		a.Pages.AddPage("modal", modal, true, true)
+		return
 	}
 
 	viewer := tview.NewTextView().
@@ -102,4 +118,17 @@ func (a *App) OpenFileViewer(filePath string) {
 	}
 
 	a.TviewApp.SetFocus(viewer)
+}
+
+func isBinary(data []byte) bool {
+	limit := 1024
+	if len(data) < limit {
+		limit = len(data)
+	}
+	for i := 0; i < limit; i++ {
+		if data[i] == 0 {
+			return true
+		}
+	}
+	return false
 }

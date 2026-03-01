@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"os/exec"
 
 	"github.com/rivo/tview"
 )
@@ -72,6 +73,18 @@ func (a *App) Run() error {
 	return a.TviewApp.SetRoot(a.Pages, true).EnableMouse(true).Run()
 }
 
+func (a *App) SuspendAndRun(command string, args []string) error {
+	var err error
+	a.TviewApp.Suspend(func() {
+		cmd := exec.Command(command, args...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+	})
+	return err
+}
+
 func (a *App) SwitchFocus() {
 	a.FocusLeft = !a.FocusLeft
 	if a.FocusLeft {
@@ -79,4 +92,11 @@ func (a *App) SwitchFocus() {
 	} else {
 		a.TviewApp.SetFocus(a.RightPane.Table)
 	}
+}
+
+func (a *App) getActivePane() *Pane {
+	if a.FocusLeft {
+		return a.LeftPane
+	}
+	return a.RightPane
 }

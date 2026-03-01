@@ -40,7 +40,7 @@ func NewStatusBar(a *App) *tview.TextView {
 			diskInfo = fmt.Sprintf(" | Disk: %s/%s free", formatSize(usage.Free), formatSize(usage.Total))
 		}
 
-		text := fmt.Sprintf(`%s%s | ["copy"] [yellow]F5[white] Copy [""]  ["move"] [yellow]F6[white] Move [""]  ["quit"] [yellow]F10[white] Quit [""]`, currentTime, diskInfo)
+		text := fmt.Sprintf(`%s%s | ["open"] [yellow]F4[white] Open With [""]  ["copy"] [yellow]F5[white] Copy [""]  ["move"] [yellow]F6[white] Move [""]  ["quit"] [yellow]F10[white] Quit [""]`, currentTime, diskInfo)
 		bar.SetText(text)
 	}
 
@@ -63,6 +63,8 @@ func NewStatusBar(a *App) *tview.TextView {
 		}
 
 		switch added[0] {
+		case "open":
+			a.ActionOpenWith(a.getActivePane())
 		case "copy":
 			a.Action(false)
 		case "move":

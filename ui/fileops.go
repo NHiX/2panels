@@ -90,13 +90,23 @@ func (a *App) ActionCompress(p *Pane) {
 		if name == "" {
 			name = defaultName
 		}
-		if !strings.HasSuffix(name, ".zip") {
+
+		// Detect extension
+		ext := filepath.Ext(name)
+		if ext == "" {
 			name += ".zip"
+			ext = ".zip"
+		}
+
+		archiver, err := fs.GetArchiver(ext)
+		if err != nil {
+			a.showError(fmt.Sprintf("Format not supported: %v", err))
+			return
 		}
 
 		dstPath := filepath.Join(p.Path, name)
 		go func() {
-			err := fs.Zip(srcPath, dstPath)
+			err := archiver.Compress(srcPath, dstPath)
 			a.TviewApp.QueueUpdateDraw(func() {
 				if err != nil {
 					a.showError(fmt.Sprintf("Compression failed: %v", err))
@@ -110,8 +120,19 @@ func (a *App) ActionCompress(p *Pane) {
 
 func (a *App) ActionExtract(p *Pane) {
 	srcPath := p.GetSelectedPath()
-	if srcPath == "" || !strings.HasSuffix(strings.ToLower(srcPath), ".zip") {
-		a.showError("Please select a .zip file to extract.")
+	if srcPath == "" {
+		return
+	}
+
+	// Simple extension detection
+	ext := filepath.Ext(srcPath)
+	if strings.HasSuffix(strings.ToLower(srcPath), ".tar.gz") {
+		ext = ".tar.gz"
+	}
+
+	archiver, err := fs.GetArchiver(ext)
+	if err != nil {
+		a.showError("Please select a supported archive file to extract.")
 		return
 	}
 
@@ -122,7 +143,7 @@ func (a *App) ActionExtract(p *Pane) {
 		}
 
 		go func() {
-			err := fs.Unzip(srcPath, target)
+			err := archiver.Extract(srcPath, target)
 			a.TviewApp.QueueUpdateDraw(func() {
 				if err != nil {
 					a.showError(fmt.Sprintf("Extraction failed: %v", err))

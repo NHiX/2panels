@@ -4,6 +4,7 @@ import (
 	"2panels/fs"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/rivo/tview"
@@ -150,7 +151,6 @@ func (a *App) ActionDelete() {
 
 	a.Pages.AddPage("delete_modal", modal, true, true)
 }
-
 func (a *App) ActionRename() {
 	var srcPane *Pane
 	focus := a.TviewApp.GetFocus()
@@ -185,4 +185,39 @@ func (a *App) ActionRename() {
 			srcPane.Refresh()
 		}
 	})
+}
+
+func (a *App) ActionOpenWith(p *Pane) {
+	srcPath := p.GetSelectedPath()
+	if srcPath == "" {
+		return
+	}
+
+	info, err := os.Stat(srcPath)
+	if err != nil || info.IsDir() {
+		return
+	}
+
+	editors := []string{os.Getenv("EDITOR"), "vim", "nano", "vi"}
+	var finalEditor string
+	for _, ed := range editors {
+		if ed == "" {
+			continue
+		}
+		if _, err := exec.LookPath(ed); err == nil {
+			finalEditor = ed
+			break
+		}
+	}
+
+	if finalEditor == "" {
+		a.showError("No editor found on system. Please set $EDITOR.")
+		return
+	}
+
+	err = a.SuspendAndRun(finalEditor, []string{srcPath})
+	if err != nil {
+		a.showError(fmt.Sprintf("Error launching editor: %v", err))
+	}
+	p.Refresh()
 }
